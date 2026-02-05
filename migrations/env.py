@@ -28,6 +28,9 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from app.models import base_model
+from app.models.organization import Organization, OrganizationPhone
+from app.models.activity import Activity
+from app.models.building import Building
 
 target_metadata = base_model.Base.metadata
 
@@ -47,7 +50,6 @@ config.set_main_option(
 )
 
 
-
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -60,12 +62,12 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = config.get_main_option('sqlalchemy.url')
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        dialect_opts={'paramstyle': 'named'},
     )
 
     with context.begin_transaction():
@@ -87,7 +89,7 @@ async def run_async_migrations() -> None:
 
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+        prefix='sqlalchemy.',
         poolclass=pool.NullPool,
     )
 

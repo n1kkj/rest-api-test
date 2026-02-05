@@ -12,6 +12,7 @@ DB_PASS = os.getenv('DB_PASS', 'postgres')
 SQLALCHEMY_DATABASE_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 DEBUG = os.getenv('DEBUG', True) == 'True'
-APP_CONFIG = {'title': 'fastapi-app', 'debug': DEBUG}
+APP_TITLE = os.getenv('APP_TITLE', 'fastapi-app')
+APP_CONFIG = {'title': APP_TITLE, 'debug': DEBUG}
 if not DEBUG:
     APP_CONFIG['openapi_url'] = None
