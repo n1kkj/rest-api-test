@@ -8,7 +8,6 @@ from app.dto.building import BuildingDTO
 class PhoneDTO(BaseDTO):
     id: int
     phone_number: str
-    is_primary: bool
 
 
 class OrganizationBaseDTO(BaseDTO):
