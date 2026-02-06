@@ -8,6 +8,9 @@ import logging
 from sqlalchemy import text
 from app.database import async_session, async_engine
 from app.models.base_model import Base
+from app.models.activity import Activity  # noqa: F401
+from app.models.organization import Organization, OrganizationPhone  # noqa: F401
+from app.models.building import Building  # noqa: F401
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,17 +20,17 @@ async def init_database():
     """Создание таблиц и заполнение тестовыми данными"""
     try:
         # Создаем таблицы - ОТДЕЛЬНОЙ транзакцией
-        logger.info("Creating database tables...")
+        logger.info('Creating database tables...')
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
         # Заполняем тестовыми данными в отдельной транзакции
-        logger.info("Populating with test data...")
+        logger.info('Populating with test data...')
         await populate_test_data()
 
-        logger.info("Database initialization completed successfully!")
+        logger.info('Database initialization completed successfully!')
     except Exception as e:
-        logger.error(f"Error initializing database: {e}")
+        logger.error(f'Error initializing database: {e}')
         raise
 
 
@@ -36,7 +39,7 @@ async def populate_test_data():
     async with async_session() as session:
         try:
             # Вставляем виды деятельности (дерево до 3 уровней)
-            logger.info("Inserting activities...")
+            logger.info('Inserting activities...')
             activities_sql = """
             INSERT INTO activity (id, name, parent_id) VALUES
             -- 1 уровень (корневые)
@@ -80,7 +83,7 @@ async def populate_test_data():
             await session.execute(text(activities_sql))
 
             # Вставляем здания
-            logger.info("Inserting buildings...")
+            logger.info('Inserting buildings...')
             buildings_sql = """
             INSERT INTO building (id, address, latitude, longitude) VALUES
             (1, 'г. Москва, ул. Ленина 1, офис 3', 55.7558, 37.6173),
@@ -94,7 +97,7 @@ async def populate_test_data():
             await session.execute(text(buildings_sql))
 
             # Вставляем организации
-            logger.info("Inserting organizations...")
+            logger.info('Inserting organizations...')
             organizations_sql = """
             INSERT INTO organization (id, name, building_id) VALUES
             (1, 'ООО "Рога и Копыта"', 1),
@@ -112,7 +115,7 @@ async def populate_test_data():
             await session.execute(text(organizations_sql))
 
             # Вставляем телефоны организаций
-            logger.info("Inserting phone numbers...")
+            logger.info('Inserting phone numbers...')
             phones_sql = """
             INSERT INTO organizationphone (id, organization_id, phone_number) VALUES
             -- ООО "Рога и Копыта"
@@ -158,7 +161,7 @@ async def populate_test_data():
             await session.execute(text(phones_sql))
 
             # Вставляем связи организаций с видами деятельности
-            logger.info("Inserting organization-activity relationships...")
+            logger.info('Inserting organization-activity relationships...')
             org_activity_sql = """
             INSERT INTO organization_activity (organization_id, activity_id) VALUES
             -- ООО "Рога и Копыта" - занимается разными видами
@@ -218,22 +221,24 @@ async def populate_test_data():
             await session.execute(text(org_activity_sql))
 
             # Сбрасываем последовательности для автоинкрементных полей
-            logger.info("Resetting sequences...")
+            logger.info('Resetting sequences...')
             await session.execute(text("SELECT setval('activity_id_seq', (SELECT COALESCE(MAX(id), 1) FROM activity))"))
             await session.execute(text("SELECT setval('building_id_seq', (SELECT COALESCE(MAX(id), 1) FROM building))"))
             await session.execute(
-                text("SELECT setval('organization_id_seq', (SELECT COALESCE(MAX(id), 1) FROM organization))"))
-            await session.execute(text(
-                "SELECT setval('organizationphone_id_seq', (SELECT COALESCE(MAX(id), 1) FROM organizationphone))"))
+                text("SELECT setval('organization_id_seq', (SELECT COALESCE(MAX(id), 1) FROM organization))")
+            )
+            await session.execute(
+                text("SELECT setval('organizationphone_id_seq', (SELECT COALESCE(MAX(id), 1) FROM organizationphone))")
+            )
 
             await session.commit()
-            logger.info("Test data populated successfully!")
+            logger.info('Test data populated successfully!')
 
         except Exception as e:
             await session.rollback()
-            logger.error(f"Error populating test data: {e}")
+            logger.error(f'Error populating test data: {e}')
             raise
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(init_database())
