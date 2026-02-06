@@ -1,14 +1,16 @@
-from typing import Optional, List
-
+from typing import Optional, List, Any
 from app.dto.base_dto import BaseDTO
-from app.dto.organization import OrganizationBaseDTO
 
 
-class BuildingDTO(BaseDTO):
+class BuildingSimpleDTO(BaseDTO):
     id: int
     address: str
     latitude: float
     longitude: float
+
+
+class BuildingDTO(BuildingSimpleDTO):
+    pass
 
 
 class BuildingCreateDTO(BaseDTO):
@@ -28,4 +30,4 @@ class GeoQueryDTO(BaseDTO):
 
 
 class BuildingWithOrganizationsDTO(BuildingDTO):
-    organizations: List[OrganizationBaseDTO]
+    organizations: List[Any]

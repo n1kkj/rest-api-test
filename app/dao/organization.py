@@ -2,6 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional, Sequence
 
+from sqlalchemy.orm import selectinload
+
 from app.dao.activity import ActivityDAO
 from app.dao.building import BuildingDAO
 from app.models.activity import organization_activity, Activity
@@ -11,19 +13,43 @@ from app.models.organization import Organization, OrganizationPhone
 class OrganizationDAO:
     @classmethod
     async def get_by_id(cls, db: AsyncSession, organization_id: int) -> Optional[Organization]:
-        query = select(Organization).where(Organization.id == organization_id)
+        query = (
+            select(Organization)
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
+            .where(Organization.id == organization_id)
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @classmethod
     async def get_by_name(cls, db: AsyncSession, name: str) -> Sequence[Organization]:
-        query = select(Organization).where(Organization.name.ilike(f'%{name}%'))
+        query = (
+            select(Organization)
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
+            .where(Organization.name.ilike(f'%{name}%'))
+        )
         result = await db.execute(query)
         return result.scalars().all()
 
     @classmethod
     async def get_by_building(cls, db: AsyncSession, building_id: int) -> Sequence[Organization]:
-        query = select(Organization).where(Organization.building_id == building_id)
+        query = (
+            select(Organization)
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
+            .where(Organization.building_id == building_id)
+        )
         result = await db.execute(query)
         return result.scalars().all()
 
@@ -33,6 +59,11 @@ class OrganizationDAO:
 
         query = (
             select(Organization)
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
             .join(organization_activity, Organization.id == organization_activity.c.organization_id)
             .where(organization_activity.c.activity_id.in_(activity_ids))
             .distinct()
@@ -65,7 +96,15 @@ class OrganizationDAO:
         if not building_ids:
             return []
 
-        query = select(Organization).where(Organization.building_id.in_(building_ids))
+        query = (
+            select(Organization)
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
+            .where(Organization.building_id.in_(building_ids))
+        )
         result = await db.execute(query)
         return result.scalars().all()
 
@@ -79,13 +118,25 @@ class OrganizationDAO:
         if not building_ids:
             return []
 
-        query = select(Organization).where(Organization.building_id.in_(building_ids))
+        query = (
+            select(Organization)
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
+            .where(Organization.building_id.in_(building_ids))
+        )
         result = await db.execute(query)
         return result.scalars().all()
 
     @classmethod
     async def get_all(cls, db: AsyncSession) -> Sequence[Organization]:
-        query = select(Organization)
+        query = select(Organization).options(
+            selectinload(Organization.building),
+            selectinload(Organization.phones),
+            selectinload(Organization.activities),
+        )
         result = await db.execute(query)
         return result.scalars().all()
 
@@ -94,8 +145,18 @@ class OrganizationDAO:
         organization = Organization(**organization_data)
         db.add(organization)
         await db.commit()
-        await db.refresh(organization)
-        return organization
+        query = (
+            select(Organization)
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
+            .where(Organization.id == organization.id)
+        )
+
+        result = await db.execute(query)
+        return result.scalar_one()
 
     @classmethod
     async def update(cls, db: AsyncSession, organization_id: int, update_data: dict) -> Optional[Organization]:

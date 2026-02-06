@@ -2,32 +2,42 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 from typing import Optional, Sequence, List
 
+from sqlalchemy.orm import selectinload
+
 from app.models.activity import Activity
 
 
 class ActivityDAO:
     @classmethod
     async def get_by_id(cls, db: AsyncSession, activity_id: int) -> Optional[Activity]:
-        query = select(Activity).where(Activity.id == activity_id)
+        query = (
+            select(Activity)
+            .options(selectinload(Activity.children), selectinload(Activity.parent))
+            .where(Activity.id == activity_id)
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @classmethod
     async def get_by_name(cls, db: AsyncSession, name: str) -> Optional[Activity]:
-        query = select(Activity).where(Activity.name.ilike(f'%{name}%'))
+        query = (
+            select(Activity)
+            .options(selectinload(Activity.children), selectinload(Activity.parent))
+            .where(Activity.name.ilike(f'%{name}%'))
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
     @classmethod
     async def get_all(cls, db: AsyncSession) -> Sequence[Activity]:
-        query = select(Activity)
+        query = select(Activity).options(selectinload(Activity.children), selectinload(Activity.parent))
         result = await db.execute(query)
         return result.scalars().all()
 
     @classmethod
     async def get_root_activities(cls, db: AsyncSession) -> Sequence[Activity]:
         """Получить корневые виды деятельности (без родителя)"""
-        query = select(Activity).where(Activity.parent_id.is_(None))
+        query = select(Activity).options(selectinload(Activity.children)).where(Activity.parent_id.is_(None))
         result = await db.execute(query)
         return result.scalars().all()
 
@@ -75,8 +85,15 @@ class ActivityDAO:
         activity = Activity(**activity_data)
         db.add(activity)
         await db.commit()
-        await db.refresh(activity)
-        return activity
+
+        query = (
+            select(Activity)
+            .options(selectinload(Activity.children), selectinload(Activity.parent))
+            .where(Activity.id == activity.id)
+        )
+
+        result = await db.execute(query)
+        return result.scalar_one()
 
     @classmethod
     async def update(cls, db: AsyncSession, activity_id: int, update_data: dict) -> Optional[Activity]:

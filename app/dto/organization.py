@@ -1,8 +1,7 @@
 from typing import Optional, List
-
-from app.dto.activity import ActivityDTO
+from app.dto.activity import ActivitySimpleDTO
+from app.dto.building import BuildingSimpleDTO
 from app.dto.base_dto import BaseDTO
-from app.dto.building import BuildingDTO
 
 
 class PhoneDTO(BaseDTO):
@@ -31,12 +30,6 @@ class OrganizationUpdateDTO(BaseDTO):
 
 
 class OrganizationDTO(OrganizationBaseDTO):
-    building: BuildingDTO
+    building: BuildingSimpleDTO
     phones: List[PhoneDTO]
-    activities: List[ActivityDTO]
-
-
-class OrganizationDetailDTO(OrganizationBaseDTO):
-    building: BuildingDTO
-    phones: List[PhoneDTO]
-    activities: List[ActivityDTO]
+    activities: List[ActivitySimpleDTO]
