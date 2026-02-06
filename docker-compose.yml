@@ -7,6 +7,7 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - database_network
     restart: unless-stopped
@@ -14,7 +15,6 @@ services:
   app:
     build:
       dockerfile: Dockerfile
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
     volumes:
       - .:/app
     env_file: .env
